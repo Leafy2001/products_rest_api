@@ -6,8 +6,13 @@ module.exports.list_orders = function(req, res){
 
 
 module.exports.create_order = function(req, res){
+    const order = {
+        product_id: req.body.p_id,
+        product_quantity: req.body.p_qn
+    }
     return res.status(200).json({
-        messge: "PRODUCT CREATED"
+        order: order,
+        messge: "ORDER PLACED"
     });
 }
 
