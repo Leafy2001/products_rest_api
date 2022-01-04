@@ -67,3 +67,25 @@ module.exports.delete_product = async function(req, res){
         });
     }
 }
+
+module.exports.update_product = async function(req, res){
+    try{
+        let prod_id = req.params.productId;
+        let product = await Product.findById(prod_id);
+        if(!product){
+            return res.status(404).json({
+                message: "Product Not Found"
+            });
+        }
+        product.name = req.body.new_name || product.name;
+        product.price = req.body.new_price || product.price;
+        await product.save();
+
+        return res.status(200).json({
+            product: product,
+            message: "Product Successfully Updated"
+        });
+    }catch(err){
+
+    }
+}
