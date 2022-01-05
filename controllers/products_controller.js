@@ -1,14 +1,18 @@
 const Product = require('../models/product.js');
 
+const path = require('path');
+const fs = require('fs');
+
 module.exports.list_products = async function(req, res){
     try{
-        let products = await Product.find({}).select('name price');
+        let products = await Product.find({}).select('name price product_image');
 
         let newProducts = products.map((product) => {
             return {
                 _id : product._id,
                 name: product.name, 
                 price: product.price,
+                product_image: product.product_image,
                 info: {
                     type: 'GET',
                     url: `http://localhost:8000/api/products/${product._id}`
@@ -20,7 +24,7 @@ module.exports.list_products = async function(req, res){
             count: products.length,
             products: newProducts
         }
-        if(respons.count === 0){
+        if(response.count === 0){
             return res.status(204).json({
                 message: "No products Available",
                 response: response
@@ -42,7 +46,7 @@ module.exports.get_product = async function(req, res){
                 product: product
             });
         }else{
-            return res.status(204).json({
+            return res.status(200).json({
                 message: "No Product Found"
             });
         }
@@ -55,16 +59,27 @@ module.exports.get_product = async function(req, res){
 
 module.exports.create_product = async function(req, res){
     try{
+        // console.log(req.body, req.file);
+        let file_path;
+        if(req.file){
+            file_path = path.join('/uploads/products/', req.file.filename);
+        }
+
         let product = await Product.create({
             name: req.body.name,
-            price: req.body.price
+            price: req.body.price,
+            product_image: file_path
         })
         return res.status(201).json({
             product: product,
-            url: `http://localhost:8000/api/products/${product._id}`,
+            request: {
+                type: 'GET',
+                url: `http://localhost:8000/api/products/${product._id}`
+            },
             message: "PRODUCT CREATED"
         });
     }catch(err){
+        console.log(err);
         return res.status(400).json({
             error_message: err
         })
@@ -75,9 +90,15 @@ module.exports.delete_product = async function(req, res){
     try{
         let product = await Product.findById(req.params.productId);
         if(!product){
-            return res.status(204).json({
+            return res.status(200).json({
                 message: "PRODUCT NOT FOUND"
             })
+        }
+        if(product.product_image){
+            let file_path = path.join(__dirname, '..', product.product_image);
+            fs.unlinkSync(file_path, (err) => {
+                console.log(err);
+            });
         }
         await Product.deleteOne({id: req.params.productId});
         return res.status(200).json({
@@ -95,12 +116,23 @@ module.exports.update_product = async function(req, res){
         let prod_id = req.params.productId;
         let product = await Product.findById(prod_id);
         if(!product){
-            return res.status(204).json({
+            return res.status(200).json({
                 message: "Product Not Found"
             });
         }
-        product.name = req.body.new_name || product.name;
-        product.price = req.body.new_price || product.price;
+        product.name = req.body.name || product.name;
+        product.price = req.body.price || product.price;
+
+        if(req.file){
+            if(product.product_image && fs.existsSync(path.join(__dirname, '..', product.product_image))){
+                let file_path = path.join(__dirname, '..', product.product_image);
+                fs.unlinkSync(file_path, (err) => {
+                    console.log(err);
+                });
+            }
+            product.product_image = path.join('/uploads/products/', req.file.filename);
+        }
+
         await product.save();
 
         return res.status(200).json({

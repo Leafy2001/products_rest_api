@@ -5,7 +5,7 @@ const bodyParser = require('body-parser');
 // const mongoose = require('mongoose');
 const connect_to_db = require('./config/mongoose');
 const port = process.env.PORT || 8000;
-
+app.use('/uploads', express.static('./uploads'))
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(bodyParser.json());
 

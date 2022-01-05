@@ -3,10 +3,13 @@ const Order = require('../models/order');
 
 module.exports.list_orders = async function(req, res){
     try{
-        let orders = await Order.find({}).sort('-createdAt');
+        let orders = await Order.find({})
+                                .sort('-createdAt')
+                                .populate('product', 'name price');
 
         let new_orders = orders.map((order) => {
             return {
+                _id: order._id,
                 product: order.product,
                 quantity: order.quantity,
                 request:{
@@ -24,7 +27,7 @@ module.exports.list_orders = async function(req, res){
 
         return res.status(200).json({
             count: new_orders.length,
-            orders: nO
+            orders: new_orders
         });
     }catch(err){
         return res.status(400).json(err);
@@ -58,17 +61,32 @@ module.exports.get_order = async function(req, res){
     try{
         let order = await Order.findById(req.params.orderId);
         if(!order){
-            return res.status(204).json({
+            return res.status(200).send({
                 message: "Order Not Found"
             })
         }
+        await order.populate('product', 'name price')
         return res.status(200).json(order);
     }catch(err){
         return res.status(400).json(err);
     }
 }
 
-module.exports.delete = function(req, res){
-    
+module.exports.delete_order = async function(req, res){
+    try{
+        let order = await Order.findById(req.params.orderId).populate('product', 'name price');
+        if(!order){
+            return res.status(200).json({
+                message: "Resquested Order not Found"
+            })
+        }
+        await Order.findByIdAndDelete(req.params.orderId);
+        return res.status(200).json({
+            message: "Order Deleted",
+            order: order
+        })
+    }catch{
+        return res.status(400).json(err);
+    }
 }
 
