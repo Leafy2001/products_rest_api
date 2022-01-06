@@ -72,6 +72,7 @@ module.exports.create_product = async function(req, res){
         })
         return res.status(201).json({
             product: product,
+            user: req.userData,
             request: {
                 type: 'GET',
                 url: `http://localhost:8000/api/products/${product._id}`

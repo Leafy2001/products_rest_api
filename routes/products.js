@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer')
 const path = require('path');
+const checkAuth = require('../config/check-auth');
 
 const PRODUCT_PATH = path.join(__dirname, '..', '/uploads/products');
 const storage = multer.diskStorage({
@@ -31,9 +32,9 @@ const products_controller = require('../controllers/products_controller');
 router.get('/', products_controller.list_products);
 router.get('/:productId', products_controller.get_product);
 
-router.post('/', upload.single('product_image'), products_controller.create_product);
-router.patch('/:productId', upload.single('product_image'), products_controller.update_product);
+router.post('/', checkAuth, upload.single('product_image'), products_controller.create_product);
+router.patch('/:productId', checkAuth, upload.single('product_image'), products_controller.update_product);
 
-router.delete('/:productId', products_controller.delete_product);
+router.delete('/:productId', checkAuth, products_controller.delete_product);
 
 module.exports = router;
